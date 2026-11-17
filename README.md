@@ -4,8 +4,6 @@
 - id
 - sku
 - nama_produk
-- merek
-- kategori
 - ukuran
 - harga_beli
 - harga_jual
@@ -17,22 +15,12 @@
 - telepon
 - alamat
 
-[pelanggan]
-- id
-- nama
-- telepon
-- alamat
-
-[kategori]
-- id
-- kategori
-
 [transaksi]
 - id
 - tipe
 - tanggal
 - produk
-- pihak
+- supplier (untuk pembelian)
 - kuantitas
 - harga_satuan
 - total

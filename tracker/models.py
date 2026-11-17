@@ -1,38 +1,9 @@
 # tracker/models.py
 import random
-import re
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import F
-
-
-def buat_kode_merek(merek):
-    kata = re.findall(r"[A-Za-z0-9]+", merek)
-    if not kata:
-        return "XX"
-    if len(kata) > 1:
-        return "".join(k[0] for k in kata[:3]).upper()
-    k = kata[0].upper()
-    konsonan = [c for c in k[1:] if c not in "AEIOU"]
-    return k[0] + (konsonan[0] if konsonan else (k[1:2] or "X"))
-
-
-def buat_kode_model(nama_produk, merek):
-    nama = re.sub(rf"^{re.escape(merek)}\s+", "", nama_produk, flags=re.IGNORECASE)
-    kata = re.findall(r"[A-Za-z0-9]+", nama)[:3]
-    kode = "".join(k if k.isdigit() else k[0] for k in kata).upper()
-    return kode or "MDL"
-
-
-class Kategori(models.Model):
-    kategori = models.CharField(max_length=50, unique=True)
-
-    class Meta:
-        verbose_name_plural = "kategori"
-
-    def __str__(self):
-        return self.kategori
 
 
 class Supplier(models.Model):
@@ -44,23 +15,9 @@ class Supplier(models.Model):
         return self.nama
 
 
-class Pelanggan(models.Model):
-    nama = models.CharField(max_length=100)
-    telepon = models.CharField(max_length=20, blank=True)
-    alamat = models.TextField(blank=True)
-
-    class Meta:
-        verbose_name_plural = "pelanggan"
-
-    def __str__(self):
-        return self.nama
-
-
 class Produk(models.Model):
-    sku = models.CharField(max_length=30, unique=True, editable=False)
+    sku = models.CharField(max_length=100, unique=True, editable=False)
     nama_produk = models.CharField(max_length=100)
-    merek = models.CharField(max_length=50)
-    kategori = models.ForeignKey(Kategori, on_delete=models.PROTECT)
     ukuran = models.CharField(max_length=10)
     harga_beli = models.DecimalField(max_digits=12, decimal_places=2)
     harga_jual = models.DecimalField(max_digits=12, decimal_places=2)
@@ -75,14 +32,12 @@ class Produk(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.sku:
-            prefix = f"{buat_kode_merek(self.merek)}-{buat_kode_model(self.nama_produk, self.merek)}"
-            urutan = [
-                int(s.rsplit("-", 1)[1])
-                for s in Produk.objects.filter(
-                    sku__startswith=f"{prefix}-"
-                ).values_list("sku", flat=True)
-            ]
-            self.sku = f"{prefix}-{max(urutan, default=0) + 1:03d}"
+            base_sku = self.nama_produk.strip().upper()
+            self.sku = base_sku
+            suffix = 2
+            while Produk.objects.filter(sku=self.sku).exclude(pk=self.pk).exists():
+                self.sku = f"{base_sku}-{suffix}"
+                suffix += 1
         super().save(*args, **kwargs)
 
 
@@ -102,12 +57,8 @@ class Transaksi(models.Model):
     tipe = models.CharField(max_length=5, choices=Tipe.choices)
     tanggal = models.DateField()
     produk = models.ForeignKey(Produk, on_delete=models.PROTECT)
-    # "pihak": supplier untuk pembelian, pelanggan untuk penjualan
     supplier = models.ForeignKey(
         Supplier, on_delete=models.PROTECT, null=True, blank=True
-    )
-    pelanggan = models.ForeignKey(
-        Pelanggan, on_delete=models.PROTECT, null=True, blank=True
     )
     kuantitas = models.PositiveIntegerField()
     harga_satuan = models.DecimalField(max_digits=12, decimal_places=2)
@@ -120,15 +71,9 @@ class Transaksi(models.Model):
     def __str__(self):
         return f"{self.kode_transaksi} - {self.produk}"
 
-    @property
-    def pihak(self):
-        return self.supplier if self.tipe == self.Tipe.PEMBELIAN else self.pelanggan
-
     def clean(self):
         if self.tipe == self.Tipe.PEMBELIAN and not self.supplier:
             raise ValidationError({"supplier": "Pembelian wajib memilih supplier."})
-        if self.tipe == self.Tipe.PENJUALAN and not self.pelanggan:
-            raise ValidationError({"pelanggan": "Penjualan wajib memilih pelanggan."})
         if (
             self.tipe == self.Tipe.PENJUALAN
             and self.pk is None
@@ -156,9 +101,7 @@ class Transaksi(models.Model):
         is_new = self.pk is None
         self.total = self.kuantitas * self.harga_satuan
 
-        if self.tipe == self.Tipe.PEMBELIAN:
-            self.pelanggan = None
-        else:
+        if self.tipe == self.Tipe.PENJUALAN:
             self.supplier = None
 
         if is_new:

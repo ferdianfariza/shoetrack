@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .dashboard import dashboard_callback
-from .models import Kategori, Pelanggan, Produk, Supplier, Transaksi
+from .models import Produk, Supplier, Transaksi
 from .views import FinanceReportPdfView
 
 
@@ -22,18 +22,15 @@ class AdminRootUrlTests(TestCase):
 
 class DashboardCallbackTests(TestCase):
     def setUp(self):
-        kategori = Kategori.objects.create(kategori="Sneakers")
         self.supplier = Supplier.objects.create(nama="Supplier")
-        self.customer = Pelanggan.objects.create(nama="Customer")
         self.product = Produk.objects.create(
             nama_produk="Nike Air Force 1",
-            merek="Nike",
-            kategori=kategori,
             ukuran="42",
             harga_beli=100000,
             harga_jual=150000,
             stok=2,
         )
+        self.assertEqual(self.product.sku, "NIKE AIR FORCE 1")
         self.request = RequestFactory().get(reverse("admin:index"))
 
     def test_dashboard_contains_business_metrics_and_widgets(self):
@@ -50,7 +47,6 @@ class DashboardCallbackTests(TestCase):
             tipe=Transaksi.Tipe.PENJUALAN,
             tanggal=today,
             produk=self.product,
-            pelanggan=self.customer,
             kuantitas=2,
             harga_satuan=150000,
         )
@@ -71,13 +67,9 @@ class DashboardCallbackTests(TestCase):
 
 class TransactionStockTests(TestCase):
     def setUp(self):
-        kategori = Kategori.objects.create(kategori="Sneakers")
         self.supplier = Supplier.objects.create(nama="Supplier")
-        self.customer = Pelanggan.objects.create(nama="Customer")
         self.product = Produk.objects.create(
             nama_produk="Nike Air Force 1",
-            merek="Nike",
-            kategori=kategori,
             ukuran="42",
             harga_beli=100000,
             harga_jual=150000,
@@ -97,7 +89,6 @@ class TransactionStockTests(TestCase):
             tipe=Transaksi.Tipe.PENJUALAN,
             tanggal=timezone.localdate(),
             produk=self.product,
-            pelanggan=self.customer,
             kuantitas=2,
             harga_satuan=150000,
         )

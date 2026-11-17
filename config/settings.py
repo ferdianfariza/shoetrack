@@ -98,19 +98,9 @@ UNFOLD = {
                 "collapsible": True,
                 "items": [
                     {
-                        "title": "Kategori",
-                        "icon": "category",
-                        "link": reverse_lazy("admin:tracker_kategori_changelist"),
-                    },
-                    {
                         "title": "Supplier",
                         "icon": "local_shipping",
                         "link": reverse_lazy("admin:tracker_supplier_changelist"),
-                    },
-                    {
-                        "title": "Pelanggan",
-                        "icon": "group",
-                        "link": reverse_lazy("admin:tracker_pelanggan_changelist"),
                     },
                     {
                         "title": "Produk",

@@ -76,13 +76,13 @@
             </div>
             <div class="dashboard-grid-table" data-grid-table>
             <table class="dashboard-table">
-                <thead><tr><th>Tanggal</th><th>Jenis</th><th>Pelanggan / Supplier</th><th>Total</th></tr></thead>
+                <thead><tr><th>Tanggal</th><th>Jenis</th><th>Supplier</th><th>Total</th></tr></thead>
                 <tbody>
                     {% for transaction in dashboard.recent_transactions %}
                     <tr>
                         <td>{{ transaction.tanggal|date:"Y-m-d" }}</td>
                         <td><span class="transaction-type type-{{ transaction.tipe }}">{{ transaction.get_tipe_display }}</span></td>
-                        <td>{{ transaction.pihak|default:"-" }}</td>
+                        <td>{{ transaction.supplier|default:"-" }}</td>
                         <td class="amount">{{ transaction.formatted_total }}</td>
                     </tr>
                     {% empty %}

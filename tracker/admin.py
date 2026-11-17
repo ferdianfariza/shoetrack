@@ -4,8 +4,6 @@ from django.db.models import F
 from unfold.admin import ModelAdmin
 
 from .models import (
-    Kategori,
-    Pelanggan,
     Produk,
     StokProduk,
     Supplier,
@@ -30,19 +28,8 @@ class StokStatusFilter(admin.SimpleListFilter):
         return queryset
 
 
-@admin.register(Kategori)
-class KategoriAdmin(ModelAdmin):
-    list_display = ("kategori",)
-
-
 @admin.register(Supplier)
 class SupplierAdmin(ModelAdmin):
-    list_display = ("nama", "telepon", "alamat")
-    search_fields = ("nama",)
-
-
-@admin.register(Pelanggan)
-class PelangganAdmin(ModelAdmin):
     list_display = ("nama", "telepon", "alamat")
     search_fields = ("nama",)
 
@@ -52,16 +39,14 @@ class ProdukAdmin(ModelAdmin):
     list_display = (
         "sku",
         "nama_produk",
-        "merek",
-        "kategori",
         "ukuran",
         "harga_beli",
         "harga_jual",
         "stok",
         "batas_minimum",
     )
-    list_filter = ("kategori", "merek", StokStatusFilter)
-    search_fields = ("sku", "nama_produk", "merek")
+    list_filter = (StokStatusFilter,)
+    search_fields = ("sku", "nama_produk")
     readonly_fields = ("sku",)
 
     @admin.display(description="Status", ordering="stok")
@@ -83,13 +68,11 @@ class StokProdukAdmin(ModelAdmin):
         "status_stok",
         "nilai_stok",
     )
-    list_filter = (StokStatusFilter, "merek")
-    search_fields = ("sku", "nama_produk", "merek")
+    list_filter = (StokStatusFilter,)
+    search_fields = ("sku", "nama_produk")
     readonly_fields = (
         "sku",
         "nama_produk",
-        "merek",
-        "kategori",
         "ukuran",
         "harga_beli",
         "harga_jual",
@@ -122,7 +105,7 @@ class TransaksiAdmin(ModelAdmin):
         "tanggal",
         "tipe",
         "produk",
-        "pihak",
+        "supplier",
         "kuantitas",
         "harga_satuan",
         "total",
