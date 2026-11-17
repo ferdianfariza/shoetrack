@@ -7,6 +7,31 @@ from .models import Produk, Supplier, Transaksi
 from .views import FinanceReportPdfView
 
 
+class SkuTests(TestCase):
+    def test_sku_uses_brand_model_and_sequence(self):
+        examples = (
+            ("Nike Air Jordan 2s", "NK-AJ2-001"),
+            ("New Balance 1923", "NB1923-001"),
+            ("Vans Old Skool", "VNS-OS-001"),
+        )
+        for nama_produk, expected_sku in examples:
+            produk = Produk.objects.create(
+                nama_produk=nama_produk,
+                ukuran="42",
+                harga_beli=100000,
+                harga_jual=150000,
+            )
+            self.assertEqual(produk.sku, expected_sku)
+
+        duplicate = Produk.objects.create(
+            nama_produk="Nike Air Jordan 2s",
+            ukuran="43",
+            harga_beli=100000,
+            harga_jual=150000,
+        )
+        self.assertEqual(duplicate.sku, "NK-AJ2-002")
+
+
 class AdminRootUrlTests(TestCase):
     def test_root_url_opens_admin_login(self):
         response = self.client.get("/")
@@ -30,7 +55,7 @@ class DashboardCallbackTests(TestCase):
             harga_jual=150000,
             stok=2,
         )
-        self.assertEqual(self.product.sku, "NIKE AIR FORCE 1")
+        self.assertEqual(self.product.sku, "NK-AF1-001")
         self.request = RequestFactory().get(reverse("admin:index"))
 
     def test_dashboard_contains_business_metrics_and_widgets(self):
