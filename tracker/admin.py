@@ -1,5 +1,6 @@
 # tracker/admin.py
 from django.contrib import admin
+from django import forms
 from django.db.models import F
 from unfold.admin import ModelAdmin
 
@@ -28,6 +29,39 @@ class StokStatusFilter(admin.SimpleListFilter):
         return queryset
 
 
+class TransaksiForm(forms.ModelForm):
+    harga_satuan = forms.DecimalField(required=False)
+
+    class Meta:
+        model = Transaksi
+        fields = "__all__"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        produk = cleaned_data.get("produk")
+        tipe = cleaned_data.get("tipe")
+        harga_satuan = cleaned_data.get("harga_satuan")
+
+        if harga_satuan is None and produk:
+            if tipe == Transaksi.Tipe.PENJUALAN:
+                cleaned_data["harga_satuan"] = produk.harga_jual
+            elif tipe == Transaksi.Tipe.PEMBELIAN:
+                supplier = cleaned_data.get("supplier")
+                if supplier:
+                    harga_satuan = (
+                        Transaksi.objects.filter(
+                            tipe=Transaksi.Tipe.PEMBELIAN,
+                            produk=produk,
+                            supplier=supplier,
+                        )
+                        .order_by("-tanggal", "-id")
+                        .values_list("harga_satuan", flat=True)
+                        .first()
+                    )
+                cleaned_data["harga_satuan"] = harga_satuan or produk.harga_beli
+        return cleaned_data
+
+
 @admin.register(Supplier)
 class SupplierAdmin(ModelAdmin):
     list_display = ("nama", "telepon", "alamat")
@@ -37,8 +71,8 @@ class SupplierAdmin(ModelAdmin):
 @admin.register(Produk)
 class ProdukAdmin(ModelAdmin):
     list_display = (
-        "sku",
-        "nama_produk",
+        "id",
+        "merek",
         "ukuran",
         "harga_beli",
         "harga_jual",
@@ -46,8 +80,12 @@ class ProdukAdmin(ModelAdmin):
         "batas_minimum",
     )
     list_filter = (StokStatusFilter,)
-    search_fields = ("sku", "nama_produk")
-    readonly_fields = ("sku",)
+    search_fields = ("merek",)
+
+    def get_exclude(self, request, obj=None):
+        if obj is None:
+            return ("harga_jual",)
+        return super().get_exclude(request, obj)
 
     @admin.display(description="Status", ordering="stok")
     def status_stok(self, obj):
@@ -61,18 +99,18 @@ class ProdukAdmin(ModelAdmin):
 @admin.register(StokProduk)
 class StokProdukAdmin(ModelAdmin):
     list_display = (
-        "sku",
-        "nama_produk",
+        "id",
+        "merek",
         "stok",
         "batas_minimum",
         "status_stok",
         "nilai_stok",
     )
     list_filter = (StokStatusFilter,)
-    search_fields = ("sku", "nama_produk")
+    search_fields = ("merek",)
     readonly_fields = (
-        "sku",
-        "nama_produk",
+        "id",
+        "merek",
         "ukuran",
         "harga_beli",
         "harga_jual",
@@ -100,6 +138,7 @@ class StokProdukAdmin(ModelAdmin):
 
 @admin.register(Transaksi)
 class TransaksiAdmin(ModelAdmin):
+    form = TransaksiForm
     list_display = (
         "kode_transaksi",
         "tanggal",
@@ -111,7 +150,7 @@ class TransaksiAdmin(ModelAdmin):
         "total",
     )
     list_filter = ("tipe", "tanggal")
-    search_fields = ("kode_transaksi", "produk__nama_produk", "produk__sku")
+    search_fields = ("kode_transaksi", "produk__merek")
     readonly_fields = ("kode_transaksi", "total")
 
     def get_changeform_initial_data(self, request):
@@ -128,6 +167,12 @@ class TransaksiAdmin(ModelAdmin):
 
 @admin.register(TransaksiPenjualan)
 class TransaksiPenjualanAdmin(TransaksiAdmin):
+    list_display = tuple(
+        field for field in TransaksiAdmin.list_display if field != "supplier"
+    )
+
+    exclude = ("supplier",)
+
     def get_queryset(self, request):
         return super().get_queryset(request).filter(tipe=Transaksi.Tipe.PENJUALAN)
 

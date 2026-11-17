@@ -99,7 +99,7 @@ def dashboard_callback(request, context):
             }
         )
 
-    low_stock = Produk.objects.filter(stok__lte=5).order_by("stok", "nama_produk")[:5]
+    low_stock = Produk.objects.filter(stok__lte=5).order_by("stok", "merek")[:5]
     recent_transactions = Transaksi.objects.select_related(
         "produk", "supplier"
     ).order_by("-tanggal", "-id")[:5]

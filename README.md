@@ -2,8 +2,7 @@
 
 [produk]
 - id
-- sku
-- nama_produk
+- merek
 - ukuran
 - harga_beli
 - harga_jual

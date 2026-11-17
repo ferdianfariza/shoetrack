@@ -1,43 +1,10 @@
 # tracker/models.py
 import random
-import re
+from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import F
-
-MULTIWORD_BRANDS = {"new balance"}
-
-
-def _kode_merek_dan_sisa_nama(nama_produk):
-    kata = nama_produk.strip().split()
-    if len(kata) >= 2 and " ".join(kata[:2]).lower() in MULTIWORD_BRANDS:
-        return " ".join(kata[:2]), kata[2:]
-    return kata[0], kata[1:]
-
-
-def _buat_kode_merek(merek):
-    kata = merek.split()
-    if len(kata) > 1:
-        return "".join(bagian[0] for bagian in kata).upper()
-    kode = re.sub(r"[AEIOU]", "", kata[0].upper())
-    return kode[:3] or kata[0][:3].upper()
-
-
-def _buat_kode_model(kata):
-    kode = []
-    for bagian in kata[:3]:
-        angka = "".join(re.findall(r"\d+", bagian))
-        kode.append(angka or bagian[0])
-    return "".join(kode).upper() or "PRD"
-
-
-def _buat_sku(nama_produk):
-    merek, sisa_nama = _kode_merek_dan_sisa_nama(nama_produk)
-    kode_merek = _buat_kode_merek(merek)
-    kode_model = _buat_kode_model(sisa_nama)
-    separator = "" if kode_model[0].isdigit() else "-"
-    return f"{kode_merek}{separator}{kode_model}"
 
 
 class Supplier(models.Model):
@@ -50,8 +17,7 @@ class Supplier(models.Model):
 
 
 class Produk(models.Model):
-    sku = models.CharField(max_length=100, unique=True, editable=False)
-    nama_produk = models.CharField(max_length=100)
+    merek = models.CharField(max_length=100)
     ukuran = models.CharField(max_length=10)
     harga_beli = models.DecimalField(max_digits=12, decimal_places=2)
     harga_jual = models.DecimalField(max_digits=12, decimal_places=2)
@@ -62,16 +28,11 @@ class Produk(models.Model):
         verbose_name_plural = "produk"
 
     def __str__(self):
-        return f"{self.nama_produk} - {self.ukuran} ({self.sku})"
+        return f"{self.merek} - {self.ukuran} (ID: {self.pk})"
 
     def save(self, *args, **kwargs):
-        if not self.sku:
-            base_sku = _buat_sku(self.nama_produk)
-            self.sku = f"{base_sku}-001"
-            suffix = 2
-            while Produk.objects.filter(sku=self.sku).exclude(pk=self.pk).exists():
-                self.sku = f"{base_sku}-{suffix:03d}"
-                suffix += 1
+        if self._state.adding:
+            self.harga_jual = self.harga_beli * Decimal("1.30")
         super().save(*args, **kwargs)
 
 
