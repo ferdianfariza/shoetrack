@@ -1,0 +1,78 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined");
+
+:root {
+    color: #252d50;
+    font-family: Inter, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background: #fff;
+    margin: 0;
+}
+
+.error-page {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+    text-align: center;
+}
+
+.brand {
+    color: #252d50;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .16em;
+    margin: 0 0 36px;
+}
+
+.error-icon {
+    color: #252d50;
+    font-size: 82px;
+    font-variation-settings: "FILL" 0, "wght" 300;
+}
+
+.error-code {
+    color: #252d50;
+    font-size: clamp(64px, 12vw, 92px);
+    font-weight: 400;
+    letter-spacing: -.08em;
+    line-height: 1;
+    margin: 18px 0 8px;
+}
+
+h1 {
+    font-size: 20px;
+    margin: 0 0 12px;
+}
+
+.message {
+    color: #252d50;
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 0 auto 22px;
+    max-width: 360px;
+}
+
+.back-link {
+    color: #252d50;
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    color: #252d50;
+}
+
+.back-link span {
+    color: #252d50;
+    margin-left: 6px;
+}

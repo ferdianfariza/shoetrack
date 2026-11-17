@@ -138,6 +138,10 @@ class TransaksiAdmin(ModelAdmin):
             initial["tipe"] = tipe
         return initial
 
+    def delete_queryset(self, request, queryset):
+        for transaksi in queryset:
+            transaksi.delete()
+
 
 @admin.register(TransaksiPenjualan)
 class TransaksiPenjualanAdmin(TransaksiAdmin):

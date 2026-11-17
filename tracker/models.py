@@ -8,7 +8,6 @@ from django.db.models import F
 
 
 def buat_kode_merek(merek):
-    """Nike -> NK, Vans -> VN, Adidas -> AD, New Balance -> NB"""
     kata = re.findall(r"[A-Za-z0-9]+", merek)
     if not kata:
         return "XX"
@@ -20,7 +19,6 @@ def buat_kode_merek(merek):
 
 
 def buat_kode_model(nama_produk, merek):
-    """Air Force 1 Low -> AF1, Old Skool -> OS"""
     nama = re.sub(rf"^{re.escape(merek)}\s+", "", nama_produk, flags=re.IGNORECASE)
     kata = re.findall(r"[A-Za-z0-9]+", nama)[:3]
     kode = "".join(k if k.isdigit() else k[0] for k in kata).upper()
@@ -147,6 +145,13 @@ class Transaksi(models.Model):
             if not Transaksi.objects.filter(kode_transaksi=kode).exists():
                 return kode
 
+    def _stock_delta(self):
+        return (
+            self.kuantitas
+            if self.tipe == self.Tipe.PEMBELIAN
+            else -self.kuantitas
+        )
+
     def save(self, *args, **kwargs):
         is_new = self.pk is None
         self.total = self.kuantitas * self.harga_satuan
@@ -160,14 +165,48 @@ class Transaksi(models.Model):
             self.kode_transaksi = self._buat_kode()
 
         with transaction.atomic():
-            super().save(*args, **kwargs)
-            if is_new:
-                delta = (
-                    self.kuantitas
-                    if self.tipe == self.Tipe.PEMBELIAN
-                    else -self.kuantitas
+            previous = None
+            if not is_new:
+                previous = Transaksi.objects.get(pk=self.pk)
+
+            product_ids = {self.produk_id}
+            if previous:
+                product_ids.add(previous.produk_id)
+            products = {
+                product.pk: product
+                for product in Produk.objects.select_for_update().filter(
+                    pk__in=product_ids
                 )
-                Produk.objects.filter(pk=self.produk_id).update(stok=F("stok") + delta)
+            }
+
+            stock_change = self._stock_delta()
+            if previous and previous.produk_id == self.produk_id:
+                stock_change -= previous._stock_delta()
+            if (
+                self.tipe == self.Tipe.PENJUALAN
+                and products[self.produk_id].stok + stock_change < 0
+            ):
+                raise ValidationError({"kuantitas": "Stok tidak cukup."})
+
+            super().save(*args, **kwargs)
+            if previous and previous.produk_id != self.produk_id:
+                Produk.objects.filter(pk=previous.produk_id).update(
+                    stok=F("stok") - previous._stock_delta()
+                )
+                stock_change = self._stock_delta()
+            if stock_change:
+                Produk.objects.filter(pk=self.produk_id).update(
+                    stok=F("stok") + stock_change
+                )
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            product = Produk.objects.select_for_update().get(pk=self.produk_id)
+            result = super().delete(*args, **kwargs)
+            Produk.objects.filter(pk=product.pk).update(
+                stok=F("stok") - self._stock_delta()
+            )
+            return result
 
 
 class TransaksiPenjualan(Transaksi):

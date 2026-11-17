@@ -23,9 +23,10 @@ h6 {
 
 .dashboard-welcome {
     align-items: center;
-    background: linear-gradient(110deg, #252d50, #414b78);
+    background: #fff;
+    border: 1px solid #e9ded0;
     border-radius: 6px;
-    color: #fff;
+    color: #252d50;
     display: flex;
     justify-content: space-between;
     margin-bottom: 16px;
@@ -35,7 +36,7 @@ h6 {
 }
 
 .dashboard-welcome h1 {
-    color: #fff;
+    color: #252d50;
     font-size: 21px;
     margin: 0 0 5px;
 }
@@ -44,7 +45,12 @@ h6 {
     color: #c49a75;
 }
 
-.dashboard-welcome p,
+.dashboard-welcome p {
+    color: #7884ae;
+    font-size: 12px;
+    margin: 0;
+}
+
 .shortcuts-card p {
     color: #e9ded0;
     font-size: 12px;
@@ -88,18 +94,24 @@ h6 {
 }
 
 .dashboard-metric {
-    border-color: transparent;
-    color: #fff;
+    background: #fff;
+    color: #252d50;
     min-height: 99px;
     padding: 18px 16px;
 }
 
-.metric-navy,
+.metric-navy {
+    background: #fff;
+}
+
+.metric-brown {
+    background: #fff;
+}
+
 .shortcut-button.navy {
     background: #252d50;
 }
 
-.metric-brown,
 .shortcut-button.brown {
     background: #a87950;
 }
@@ -117,7 +129,7 @@ h6 {
 }
 
 .dashboard-metric small {
-    color: #e9ded0;
+    color: #7884ae;
 }
 
 .dashboard-card {
@@ -469,6 +481,29 @@ html[data-theme="dark"] .shoetrack-dashboard,
 html.dark .shoetrack-report,
 html[data-theme="dark"] .shoetrack-report {
     color: #e5e7eb;
+}
+
+html.dark .dashboard-welcome,
+html[data-theme="dark"] .dashboard-welcome,
+html.dark .dashboard-metric,
+html[data-theme="dark"] .dashboard-metric {
+    background: #242220;
+    border-color: #3e3a35;
+    color: #f1ece4;
+}
+
+html.dark .dashboard-welcome h1,
+html[data-theme="dark"] .dashboard-welcome h1,
+html.dark .dashboard-metric strong,
+html[data-theme="dark"] .dashboard-metric strong {
+    color: #f1ece4;
+}
+
+html.dark .dashboard-welcome p,
+html[data-theme="dark"] .dashboard-welcome p,
+html.dark .dashboard-metric small,
+html[data-theme="dark"] .dashboard-metric small {
+    color: #a79d91;
 }
 
 html.dark .dashboard-card,
