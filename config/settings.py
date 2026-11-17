@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 from pathlib import Path
 
+from django.templatetags.static import static
+from django.urls import reverse_lazy
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -41,6 +44,129 @@ INSTALLED_APPS = [
     "tracker",
 ]
 
+UNFOLD = {
+    "SITE_TITLE": "SHOETRACK",
+    "SITE_HEADER": "Sneakers Sportzone",
+    "SITE_SUBHEADER": "SHOETRACK | Shoe Tracking and Inventory System",
+    "SITE_SYMBOL": "storefront",
+    "DASHBOARD_CALLBACK": "tracker.dashboard.dashboard_callback",
+    "SITE_VIEWS": [
+        ("reports/finance/", "finance_report", "tracker.views.FinanceReportView"),
+        (
+            "reports/finance/pdf/",
+            "finance_report_pdf",
+            "tracker.views.FinanceReportPdfView",
+        ),
+    ],
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "title": "Navigasi",
+                "separator": False,
+                "items": [
+                    {
+                        "title": "Dashboard",
+                        "icon": "dashboard",
+                        "link": reverse_lazy("admin:index"),
+                    },
+                    {
+                        "title": "Persediaan / Stok",
+                        "icon": "inventory_2",
+                        "link": reverse_lazy("admin:tracker_stokproduk_changelist"),
+                    },
+                    {
+                        "title": "Penjualan",
+                        "icon": "point_of_sale",
+                        "link": reverse_lazy(
+                            "admin:tracker_transaksipenjualan_changelist"
+                        ),
+                    },
+                    {
+                        "title": "Pembelian",
+                        "icon": "shopping_cart",
+                        "link": reverse_lazy(
+                            "admin:tracker_transaksipembelian_changelist"
+                        ),
+                    },
+                ],
+            },
+            {
+                "title": "Data Master",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "Kategori",
+                        "icon": "category",
+                        "link": reverse_lazy("admin:tracker_kategori_changelist"),
+                    },
+                    {
+                        "title": "Supplier",
+                        "icon": "local_shipping",
+                        "link": reverse_lazy("admin:tracker_supplier_changelist"),
+                    },
+                    {
+                        "title": "Pelanggan",
+                        "icon": "group",
+                        "link": reverse_lazy("admin:tracker_pelanggan_changelist"),
+                    },
+                    {
+                        "title": "Produk",
+                        "icon": "inventory_2",
+                        "link": reverse_lazy("admin:tracker_produk_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": "Laporan",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "Laporan Keuangan",
+                        "icon": "account_balance",
+                        "link": reverse_lazy("admin:finance_report"),
+                    },
+                ],
+            },
+        ],
+    },
+    "BORDER_RADIUS": "6px",
+    "STYLES": [
+        lambda request: static("tracker/css/admin.css"),
+    ],
+    "COLORS": {
+        "base": {
+            "50": "#FBF3DE",
+            "100": "#F5EFE7",
+            "200": "#E9DED0",
+            "300": "#C49A75",
+            "400": "#A87950",
+            "500": "#7D5B42",
+            "600": "#62584F",
+            "700": "#4D443D",
+            "800": "#38312C",
+            "900": "#25221F",
+            "950": "#171412",
+        },
+        "primary": {
+            "50": "#F1F3FA",
+            "100": "#E2E6F3",
+            "200": "#C6CDE5",
+            "300": "#A8B1D0",
+            "400": "#7884AE",
+            "500": "#414B78",
+            "600": "#333B65",
+            "700": "#252D50",
+            "800": "#1D2442",
+            "900": "#151A31",
+            "950": "#0D1020",
+        },
+    },
+}
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -56,7 +182,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "tracker" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -117,6 +243,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 # Email

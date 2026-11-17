@@ -1,0 +1,64 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | {{ site_title }}{% endblock %}
+
+{% block branding %}
+    {% include "unfold/helpers/site_branding.html" %}
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="shoetrack-report">
+    <div class="report-heading">
+        <div>
+            <h1>Laporan Keuangan</h1>
+            <p>Ringkasan laporan berdasarkan transaksi yang tersimpan.</p>
+        </div>
+        <a class="report-print-button" href="{{ report.pdf_url }}">Unduh PDF A4</a>
+    </div>
+
+    <section class="report-metrics">
+        {% for card in report.cards %}
+        <article class="report-metric">
+            <span>{{ card.label }}</span>
+            <strong>{{ card.value }}</strong>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="dashboard-card report-table-card">
+        <h2>Laporan Laba Rugi Sederhana</h2>
+        <div class="dashboard-grid-table" data-grid-table>
+        <table class="dashboard-table report-table">
+            <thead><tr><th>Keterangan</th><th>Jumlah</th></tr></thead>
+            <tbody>
+                {% for label, amount in report.rows %}
+                <tr><td>{{ label }}</td><td class="amount">{{ amount }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        <p class="report-note">Laporan ini merupakan ringkasan operasional sederhana, bukan laporan keuangan lengkap sesuai SAK. Pembelian tidak dikurangkan langsung dari penjualan untuk menghitung laba kotor.</p>
+    </section>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
+<script>
+    document.querySelectorAll("[data-grid-table]").forEach((container) => {
+        const table = container.querySelector("table");
+        const columns = [...table.querySelectorAll("thead th")].map((cell) => cell.textContent.trim());
+        const data = [...table.querySelectorAll("tbody tr")].map((row) => (
+            [...row.querySelectorAll("td")].map((cell) => gridjs.html(cell.innerHTML))
+        ));
+        container.replaceChildren();
+        const grid = new gridjs.Grid({
+            columns,
+            data,
+        });
+        grid.render(container);
+    });
+</script>
+{% endblock %}

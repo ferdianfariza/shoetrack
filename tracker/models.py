@@ -67,6 +67,7 @@ class Produk(models.Model):
     harga_beli = models.DecimalField(max_digits=12, decimal_places=2)
     harga_jual = models.DecimalField(max_digits=12, decimal_places=2)
     stok = models.IntegerField(default=0)
+    batas_minimum = models.PositiveIntegerField(default=5)
 
     class Meta:
         verbose_name_plural = "produk"
@@ -85,6 +86,13 @@ class Produk(models.Model):
             ]
             self.sku = f"{prefix}-{max(urutan, default=0) + 1:03d}"
         super().save(*args, **kwargs)
+
+
+class StokProduk(Produk):
+    class Meta:
+        proxy = True
+        verbose_name = "stok produk"
+        verbose_name_plural = "stok produk"
 
 
 class Transaksi(models.Model):
@@ -160,3 +168,17 @@ class Transaksi(models.Model):
                     else -self.kuantitas
                 )
                 Produk.objects.filter(pk=self.produk_id).update(stok=F("stok") + delta)
+
+
+class TransaksiPenjualan(Transaksi):
+    class Meta:
+        proxy = True
+        verbose_name = "penjualan"
+        verbose_name_plural = "penjualan"
+
+
+class TransaksiPembelian(Transaksi):
+    class Meta:
+        proxy = True
+        verbose_name = "pembelian"
+        verbose_name_plural = "pembelian"

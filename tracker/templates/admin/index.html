@@ -1,0 +1,232 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}Dashboard | {{ site_title }}{% endblock %}
+
+{% block branding %}
+    {% include "unfold/helpers/site_branding.html" %}
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="shoetrack-dashboard">
+    <section class="dashboard-welcome">
+        <div>
+            <h1>Selamat datang di <strong>Shoetrack!</strong></h1>
+            <p>Kelola bisnis sneakers Anda dengan lebih mudah dan efisien.</p>
+        </div>
+        <span class="material-symbols-outlined dashboard-welcome-icon">steps</span>
+    </section>
+
+    <section class="dashboard-metrics" aria-label="Ringkasan bisnis">
+        {% for metric in dashboard.metrics %}
+        <article class="dashboard-metric {% cycle 'metric-navy' 'metric-brown' %}">
+            <span>{{ metric.label }}</span>
+            <strong>{{ metric.value }}</strong>
+            <small>{% if metric.label == "Nilai Persediaan" %}Harga pokok stok tersedia{% else %}Akumulasi transaksi{% endif %}</small>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="dashboard-main-grid">
+        <article class="dashboard-card sales-chart-card">
+            <div class="dashboard-card-heading">
+                <h2>Grafik Transaksi</h2>
+                <div class="sales-chart-heading-tools">
+                    <div class="sales-chart-controls" role="group" aria-label="Periode grafik penjualan">
+                        <button type="button" class="sales-chart-toggle is-active" data-chart-period="daily" aria-pressed="true">Harian</button>
+                        <button type="button" class="sales-chart-toggle" data-chart-period="monthly" aria-pressed="false">Bulanan</button>
+                    </div>
+                </div>
+            </div>
+            <div class="sales-chart">
+                <canvas id="sales-chart" aria-label="Grafik transaksi harian"></canvas>
+            </div>
+        </article>
+
+        <article class="dashboard-card">
+            <div class="dashboard-card-heading">
+                <h2><span class="material-symbols-outlined">warning</span> Stok Menipis</h2>
+                <span class="dashboard-badge">{{ dashboard.low_stock|length }} produk</span>
+            </div>
+            <div class="dashboard-grid-table" data-grid-table>
+            <table class="dashboard-table">
+                <thead><tr><th>Produk</th><th>Stok</th><th>Min. Stok</th></tr></thead>
+                <tbody>
+                    {% for product in dashboard.low_stock %}
+                    <tr><td>{{ product.nama_produk }}</td><td><span class="stock-warning">{{ product.stok }}</span></td><td>5</td></tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="dashboard-empty">Semua stok aman.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-bottom-grid">
+        <article class="dashboard-card">
+            <div class="dashboard-card-heading">
+                <h2>5 Transaksi Terakhir</h2>
+                <a href="{{ dashboard.urls.transactions }}">Lihat transaksi</a>
+            </div>
+            <div class="dashboard-grid-table" data-grid-table>
+            <table class="dashboard-table">
+                <thead><tr><th>Tanggal</th><th>Jenis</th><th>Pelanggan / Supplier</th><th>Total</th></tr></thead>
+                <tbody>
+                    {% for transaction in dashboard.recent_transactions %}
+                    <tr>
+                        <td>{{ transaction.tanggal|date:"Y-m-d" }}</td>
+                        <td><span class="transaction-type type-{{ transaction.tipe }}">{{ transaction.get_tipe_display }}</span></td>
+                        <td>{{ transaction.pihak|default:"-" }}</td>
+                        <td class="amount">{{ transaction.formatted_total }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="dashboard-empty">Belum ada transaksi.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </article>
+
+        <article class="dashboard-card shortcuts-card">
+            <div class="dashboard-card-heading"><h2>Pintasan</h2></div>
+            <div class="shortcut-actions">
+                <a href="{{ dashboard.urls.sales }}" class="shortcut-button navy">+ Penjualan Baru</a>
+                <a href="{{ dashboard.urls.purchases }}" class="shortcut-button brown">+ Pembelian Baru</a>
+            </div>
+            <p>Gunakan pintasan untuk mencatat transaksi dan memperbarui persediaan secara otomatis.</p>
+        </article>
+    </section>
+</div>
+{{ dashboard.chart_data|json_script:"dashboard-chart-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
+<script>
+    (() => {
+        const chartData = JSON.parse(document.getElementById("dashboard-chart-data").textContent);
+        const canvas = document.getElementById("sales-chart");
+        const buttons = document.querySelectorAll(".sales-chart-toggle");
+
+        const formatRupiah = (amount) => new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            maximumFractionDigits: 0,
+        }).format(amount);
+
+        const isDarkMode = () => (
+            document.documentElement.classList.contains("dark")
+            || document.documentElement.dataset.theme === "dark"
+        );
+
+        const themeColors = () => ({
+            text: isDarkMode() ? "#a79d91" : "#62584f",
+            grid: isDarkMode() ? "#4b4640" : "#e9ded0",
+        });
+
+        const colors = themeColors();
+        const chart = new Chart(canvas, {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [{
+                    label: "Penjualan",
+                    data: [],
+                    borderColor: "#a87950",
+                    backgroundColor: "#a87950",
+                    pointBackgroundColor: "#a87950",
+                    pointBorderColor: isDarkMode() ? "#1f2937" : "#fff",
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    tension: 0.2,
+                }, {
+                    label: "Pembelian",
+                    data: [],
+                    borderColor: "#414b78",
+                    backgroundColor: "#414b78",
+                    pointBackgroundColor: "#414b78",
+                    pointBorderColor: isDarkMode() ? "#1f2937" : "#fff",
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    tension: 0.2,
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: "index",
+                },
+                plugins: {
+                    legend: {
+                        align: "center",
+                        labels: {
+                            color: colors.text,
+                            usePointStyle: true,
+                        },
+                        position: "top",
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => `${context.dataset.label}: ${formatRupiah(context.parsed.y)}`,
+                        },
+                    },
+                },
+                scales: {
+                    x: {
+                        grid: { color: colors.grid },
+                        ticks: { color: colors.text },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: colors.grid },
+                        ticks: {
+                            color: colors.text,
+                            callback: (value) => formatRupiah(value),
+                        },
+                    },
+                },
+            },
+        });
+
+        const renderChart = (period) => {
+            const values = chartData[period];
+            chart.data.labels = values.map((item) => item.label);
+            chart.data.datasets[0].data = values.map((item) => item.sales);
+            chart.data.datasets[1].data = values.map((item) => item.purchases);
+            chart.update();
+        };
+
+        buttons.forEach((button) => {
+            button.addEventListener("click", () => {
+                buttons.forEach((item) => {
+                    const isActive = item === button;
+                    item.classList.toggle("is-active", isActive);
+                    item.setAttribute("aria-pressed", isActive);
+                });
+                renderChart(button.dataset.chartPeriod);
+            });
+        });
+
+        renderChart("daily");
+
+        document.querySelectorAll("[data-grid-table]").forEach((container) => {
+            const table = container.querySelector("table");
+            const columns = [...table.querySelectorAll("thead th")].map((cell) => cell.textContent.trim());
+            const data = [...table.querySelectorAll("tbody tr")].map((row) => (
+                [...row.querySelectorAll("td")].map((cell) => gridjs.html(cell.innerHTML))
+            ));
+            container.replaceChildren();
+            const grid = new gridjs.Grid({
+                columns,
+                data,
+            });
+            grid.render(container);
+        });
+    })();
+</script>
+{% endblock %}
