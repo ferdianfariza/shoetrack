@@ -25,8 +25,8 @@ from unfold.views import UnfoldSiteViewMixin
 from .models import Produk, Transaksi
 
 COMPANY_NAME = "SHOETRACK"
-COMPANY_ADDRESS = "Jl. Contoh No. 1, Semarang, Jawa Tengah"
-COMPANY_CONTACT = "Telp: 0800-0000-0000  |  Email: info@shoetrack.id"
+COMPANY_ADDRESS = "xxx"
+COMPANY_CONTACT = "xxx"
 
 
 def page_not_found(request, exception=None):

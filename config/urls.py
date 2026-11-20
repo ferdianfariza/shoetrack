@@ -14,6 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, re_path
 
@@ -22,8 +23,8 @@ from tracker.views import page_not_found
 admin.site.final_catch_all_view = False
 
 urlpatterns = [
-    path('', admin.site.urls),
-    re_path(r'^.*$', page_not_found),
+    path("", admin.site.urls),
+    re_path(r"^.*$", page_not_found),
 ]
 
-handler404 = 'tracker.views.page_not_found'
+handler404 = "tracker.views.page_not_found"

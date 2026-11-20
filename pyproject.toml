@@ -1,7 +1,7 @@
 [project]
 name = "shoetrack"
 version = "0.1.0"
-description = "Add your description here"
+description = "Sistem inventory, penjualan, dan pembelian toko sepatu"
 readme = "README.md"
 authors = [
     { name = "ferdianfariza", email = "ferdianfariza@gmail.com" }
@@ -12,10 +12,3 @@ dependencies = [
     "django-unfold>=0.110.1",
     "reportlab>=4.4.4",
 ]
-
-[project.scripts]
-shoetrack = "shoetrack:main"
-
-[build-system]
-requires = ["uv_build>=0.13.8,<0.14.0"]
-build-backend = "uv_build"

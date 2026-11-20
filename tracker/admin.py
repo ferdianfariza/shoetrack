@@ -1,6 +1,6 @@
 # tracker/admin.py
-from django.contrib import admin
 from django import forms
+from django.contrib import admin
 from django.db.models import F
 from unfold.admin import ModelAdmin
 
@@ -80,7 +80,10 @@ class ProdukAdmin(ModelAdmin):
         "batas_minimum",
     )
     list_filter = (StokStatusFilter,)
-    search_fields = ("merek",)
+    search_fields = (
+        "merek",
+        "ukuran",
+    )
 
     def get_exclude(self, request, obj=None):
         if obj is None:

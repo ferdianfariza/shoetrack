@@ -50,6 +50,9 @@ UNFOLD = {
     "SITE_SUBHEADER": "SHOETRACK | Shoe Tracking and Inventory System",
     "SITE_SYMBOL": "storefront",
     "DASHBOARD_CALLBACK": "tracker.dashboard.dashboard_callback",
+    "LOGIN": {
+        "image": lambda request: static("background.jpg"),
+    },
     "SITE_VIEWS": [
         ("reports/finance/", "finance_report", "tracker.views.FinanceReportView"),
         (
@@ -126,6 +129,7 @@ UNFOLD = {
     "BORDER_RADIUS": "6px",
     "STYLES": [
         lambda request: static("tracker/css/admin.css"),
+        lambda request: static("tracker/css/login.css"),
     ],
     "COLORS": {
         "base": {

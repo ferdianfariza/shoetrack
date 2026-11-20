@@ -32,7 +32,7 @@ class Produk(models.Model):
 
     def save(self, *args, **kwargs):
         if self._state.adding:
-            self.harga_jual = self.harga_beli * Decimal("1.30")
+            self.harga_jual = self.harga_beli * Decimal("1.50")
         super().save(*args, **kwargs)
 
 
